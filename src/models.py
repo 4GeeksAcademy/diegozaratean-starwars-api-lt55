@@ -15,5 +15,22 @@ class User(db.Model):
         return {
             "id": self.id,
             "email": self.email,
+            "esta_vivo": self.is_active,
+            # do not serialize the password, its a security breach
+        }
+
+
+class Empresa(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    nombre: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
+    slogan: Mapped[str] = mapped_column(nullable=False)
+    ciudad: Mapped[str] = mapped_column(nullable=False)
+
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "nombre": self.nombre,
+            "ciudad": self.ciudad,
             # do not serialize the password, its a security breach
         }
