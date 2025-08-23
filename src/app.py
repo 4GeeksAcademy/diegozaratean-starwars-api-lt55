@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User, Empresa
+from models import db, User, Empresa, Videojuego
 from sqlalchemy import select
 #from models import Person
 
@@ -83,6 +83,14 @@ def get_companies():
 
     return jsonify(results), 200
 
+@app.route('/videojuego', methods=['GET'])
+def get_games():
+    # all_companies = Empresa.query.all()
+    all_companies = db.session.execute(select(Videojuego)).scalars().all()
+    results = list(map(lambda company: company.serialize() ,all_companies))
+
+    return jsonify(results), 200
+
 @app.route('/empresa/<int:company_id>', methods=['GET'])
 def get_company(company_id):
     # company = Empresa.query.filter_by(id=company_id).first()
@@ -93,6 +101,45 @@ def get_company(company_id):
     # company = db.session.get(Empresa, company_id) 
 
     return jsonify(company.serialize()), 200
+
+@app.route('/empresa', methods=['POST'])
+def add_company():
+    body = request.get_json()
+
+    if "nombre" not in body:
+        return jsonify({"msg":"Error: Debes enviarme el nombre "}), 400
+    
+    if body['nombre'] == '':
+        return jsonify({"msg":"Error: el nombre no puede estar vacio "}), 400
+
+    company = Empresa(**body)
+    db.session.add(company)
+    db.session.commit()
+
+    response_body = {
+        "msg": "Se creo la empresa",
+        "company": company.serialize()
+    }
+
+    return jsonify(response_body), 200
+
+@app.route('/empresa/<int:company_id>', methods=['DELETE'])
+def cualquier_cosa(company_id):
+    # company = Empresa.query.filter_by(id=company_id).first()
+    company = db.session.execute(select(Empresa).where(Empresa.id == company_id)).scalar_one_or_none()
+
+    db.session.delete(company)
+    db.session.commit()
+
+
+    # company = Empresa.query.get(company_id)
+    # company = db.session.get(Empresa, company_id) 
+
+    response_body = {
+        "msg": "Se elimino la empresa " + company.nombre
+    }
+
+    return jsonify(response_body), 200
 ######### END API  #########
 
 # this only runs if `$ python src/app.py` is executed
